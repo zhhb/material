@@ -4,18 +4,15 @@
  * bar nor animate.
  */
 function linkTabInk(scope, element, tabsCtrl, $q, $materialEffects) {
-  // TODO scope.nostretch
   if ( scope.nobar ) return;
 
   // Single inkBar is used for all tabs
   var tabsHeader = findNode('.tabs-header-items-container', element); // excludes paginators
   var inkBar = findNode("material-ink-bar", element);
-  var lastLeft = 0;
 
-  // Immediately place the ink bar
-  updateInkBar(true);
+    // Immediately place the ink bar
+    updateInkBar(true);
 
-  // Delay inkBar updates 1-frame until pagination updates...
   return updateInkBar;
 
   /**
@@ -25,6 +22,7 @@ function linkTabInk(scope, element, tabsCtrl, $q, $materialEffects) {
    *
    * @param tab
    * @param skipAnimation
+   * @returns Promise
    */
   function updateInkBar( immediate ) {
     var selButton = tabsCtrl.selectedElement();
@@ -37,10 +35,10 @@ function linkTabInk(scope, element, tabsCtrl, $q, $materialEffects) {
     if ( !showInk || isHiding ) {
       // no animation
       inkBar.toggleClass('animate', (immediate !== true))
-      .css({
-        display : 'none',
-        width : '0px'
-      });
+            .css({
+              display : 'none',
+              width : '0px'
+            });
 
     } else {
       // Just a linear animation...
