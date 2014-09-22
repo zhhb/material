@@ -3,27 +3,27 @@
 
   /**
    * ************************************************
-   * Tests for $$qTreeAdaptor service
+   * Tests for $$qChainAdaptor service
    * @private
    * ************************************************
    */
-  describe('$$qTreeAdaptor', function()
+  describe('$$qChainAdaptor', function()
   {
     var $$q, $timeout;
 
-    var adapt, qTree, node = {
+    var adapt, qChain, node = {
       start : noop,
       $$id  : "338440"
     };
 
-    beforeEach(module('ngQTree'));
-    beforeEach(inject( function(_$timeout_, $$qTreeAdaptor,  _$$q_, _$qTree_) {
-      adapt    = $$qTreeAdaptor;
+    beforeEach(module('ngQChain'));
+    beforeEach(inject( function(_$timeout_, $$qChainAdaptor,  _$$q_, _$qChain_) {
+      adapt    = $$qChainAdaptor;
       $$q      = _$$q_;
       $timeout = _$timeout_;
 
-      // Create instance of QTree
-      qTree = _$qTree_();
+      // Create instance of qChain
+      qChain = _$qChain_();
     }));
 
 
@@ -40,7 +40,7 @@
       it('`node`'         , function() { expectAPI(adapt( node  )); });
       it('`Function`'     , function() { expectAPI(adapt( noop  )); });
       it('`Promise`'      , function() { expectAPI(adapt( $$q.when(true) )); });
-      it('`qTree`'        , function() { expectAPI(adapt( qTree )); });
+      it('`qChain`'        , function() { expectAPI(adapt( qChain )); });
 
       function expectAPI( proxy )
       {
@@ -60,7 +60,7 @@
       it('`Function`'     , function() { expectID(adapt( noop  )); });
       it('`node`'         , function() { expectID(adapt( node )          , true); });
       it('`Promise`'      , function() { expectID(adapt( $$q.when(true) ), true); });
-      it('`qTree`'        , function() { expectID(adapt( qTree )      , true); });
+      it('`qChain`'        , function() { expectID(adapt( qChain )      , true); });
 
       function expectID(proxy, checkNotEmpty ) {
         expect( angular.isString(proxy.id())).toBe(true);
@@ -80,7 +80,7 @@
       it('`node`'         , function() { expectPromise(adapt( node  )); });
       it('`Function`'     , function() { expectPromise(adapt( noop  ));  });
       it('`Promise`'      , function() { expectPromise(adapt( $$q.when(true) )); });
-      it('`qTree`'        , function() { expectPromise(adapt( qTree )); });
+      it('`qChain`'        , function() { expectPromise(adapt( qChain )); });
 
       function expectPromise(proxy) {
         expect( isPromiseLike( proxy.start() )).toBeTruthy();
@@ -97,7 +97,7 @@
       it('`Function`'     , function() { expectResolveTo( adapt( noop  ), 3 ); });
       it('`node`'         , function() { expectResolveTo( adapt( node          ), 3 ); });
       it('`Promise`'      , function() { expectResolveTo( adapt( $$q.when(true)), 3 ); });
-      it('`qTree`'        , function() { expectResolveTo( adapt( qTree ), 3 ); });
+      it('`qChain`'        , function() { expectResolveTo( adapt( qChain ), 3 ); });
 
       function expectResolveTo( node, value ) {
         var result;
@@ -113,13 +113,13 @@
 
   /**
    * ************************************************
-   * Tests for $qTree service
+   * Tests for $qChain service
    * ************************************************
    */
-  describe('$qTree', function() {
-    var $$q, qTree, $timeout;
+  describe('$qChain', function() {
+    var $$q, qChain, $timeout;
 
-    beforeEach(module('ngQTree'));
+    beforeEach(module('ngQChain'));
     beforeEach(inject(function (_$timeout_, _$$q_) {
       $$q      = _$$q_;
       $timeout = _$timeout_;
@@ -127,36 +127,36 @@
 
     describe('initial configuration', function ()
     {
-      beforeEach(inject(function (_$qTree_) {
-        // Create instance of QTree without custom adaptor
-        qTree = _$qTree_();
+      beforeEach(inject(function (_$qChain_) {
+        // Create instance of qChain without custom adaptor
+        qChain = _$qChain_();
       }));
 
-      it('should work without a custom adaptor factory', inject(function ($qTree) {
-        expect(isQTreeLike($qTree())).toBe(true);
+      it('should work without a custom adaptor factory', inject(function ($qChain) {
+        expect(isQChainLink($qChain())).toBe(true);
       }));
 
       it('sequence() should return `self`', function () {
-        expect(qTree.sequence() === qTree).toBe(true);
+        expect(qChain.sequence() === qChain).toBe(true);
       });
 
       it('parallel() should return `self`', function () {
-        expect(qTree.parallel() === qTree).toBe(true);
+        expect(qChain.parallel() === qChain).toBe(true);
       });
 
       it('sequence() should return `self`', function () {
-        expect(qTree.tree() === qTree).toBe(true);
+        expect(qChain.tree() === qChain).toBe(true);
       });
 
       it('start() should return a promise', function () {
-        expect(isPromiseLike(qTree.start())).toBe(true);
+        expect(isPromiseLike(qChain.start())).toBe(true);
       });
 
       it('should publish an unresolved promise before start()', function () {
-        expect(isPromiseLike(qTree.promise)).toBe(true);
+        expect(isPromiseLike(qChain.promise)).toBe(true);
 
         var started;
-        qTree.promise.then(function () {
+        qChain.promise.then(function () {
           started = true;
         });
 
@@ -166,9 +166,9 @@
       it('should publish a resolved promise after start()', function () {
         var started;
 
-        qTree.start();
+        qChain.start();
 
-        qTree.promise.then(function () {
+        qChain.promise.then(function () {
           started = true;
         });
         $timeout.flush();
@@ -179,14 +179,14 @@
       it('start() should return a resolved promise', function () {
         var result;
 
-        qTree.start().then(function (response) {
+        qChain.start().then(function (response) {
           result = response;
         });
         $timeout.flush();
 
         expect(result).toBe(true);
 
-        qTree.promise.then(function () {
+        qChain.promise.then(function () {
           result = "resolved";
         });
         $timeout.flush();
@@ -198,9 +198,9 @@
 
     describe('building sequences', function ()
     {
-      beforeEach(inject(function (_$qTree_) {
-        // Create instance of QTree without custom adaptor
-        qTree = _$qTree_();
+      beforeEach(inject(function (_$qChain_) {
+        // Create instance of qChain without custom adaptor
+        qChain = _$qChain_();
       }));
 
       describe('before start()', function () {
@@ -261,10 +261,10 @@
           expect(result).toBe(0);
         });
 
-        it('should be pending with sequence( QTree )', inject(function ($qTree) {
+        it('should be pending with sequence( qChain )', inject(function ($qChain) {
           var result = 0;
 
-          makeSequence($qTree(), function () {
+          makeSequence($qChain(), function () {
             result += 5;
           });
 
@@ -275,17 +275,17 @@
 
       describe('after start()', function () {
 
-        it("should resolve a sequence( undefined )", function () {
+        it("should resolve a sequence( undefined )", inject(function($qChain) {
           var result = 0;
 
-          makeSequence(undefined, function () {
-            result += 13;
-          }).start();
+          $qChain().sequence()
+            .start().then(function () {
+              result += 13;
+            });
 
           $timeout.flush();
           expect(result).toBe(13);
-
-        });
+        }));
 
         it("should resolve a sequence( string )", function () {
           var result = 0;
@@ -398,10 +398,10 @@
           expect(result).toBe(6);
         });
 
-        it('should resolve a sequence( QTree )', inject(function ($qTree) {
+        it('should resolve a sequence( qChain )', inject(function ($qChain) {
           var result = 0;
 
-          makeSequence($qTree(), function () {
+          makeSequence($qChain(), function () {
             result += 5;
           }).start();
 
@@ -410,7 +410,7 @@
           expect(result).toBe(5);
         }));
 
-        it('should resolve complex sequence', inject(function($qTree) {
+        it('should resolve complex sequence', inject(function($qChain) {
 
           var result=0,
             node = {
@@ -420,10 +420,10 @@
               }
             };
 
-          $qTree().sequence(
+          $qChain().sequence(
             node,
             function() { return $timeout(function () {  return result += 3; }) },
-            $qTree().sequence( node )
+            $qChain().sequence( node )
           )
             .start()
             .then(function() {
@@ -440,9 +440,9 @@
 
     describe('building parallels', function ()
     {
-      beforeEach(inject(function (_$qTree_) {
-        // Create instance of QTree without custom adaptor
-        qTree = _$qTree_();
+      beforeEach(inject(function (_$qChain_) {
+        // Create instance of qChain without custom adaptor
+        qChain = _$qChain_();
       }));
 
       describe('before start()', function () {
@@ -504,10 +504,10 @@
           expect(result).toBe(0);
         });
 
-        it('should be pending with parallel( QTree )', inject(function ($qTree) {
+        it('should be pending with parallel( qChain )', inject(function ($qChain) {
           var result = 0;
 
-          makeParallel( $qTree(), $$q.when(true), function () {
+          makeParallel( $qChain(), $$q.when(true), function () {
             result += 5;
           });
 
@@ -518,16 +518,17 @@
 
       describe('after start()', function () {
 
-        it("should resolve a parallel( undefined )", function () {
+        it("should resolve a parallel( undefined )", inject(function($qChain) {
           var result = 0;
 
-          makeParallel( undefined, function () {
-            result += 13;
-          }).start();
+          $qChain().parallel()
+            .start().then(function () {
+              result += 13;
+            });
 
           $timeout.flush();
           expect(result).toBe(13);
-        });
+        }));
 
         it("should resolve a parallel( string )", function () {
           var result = 0;
@@ -648,10 +649,10 @@
           expect(result).toBe(11);
         });
 
-        it('should resolve a parallel( QTree )', inject(function ($qTree) {
+        it('should resolve a parallel( qChain )', inject(function ($qChain) {
           var result = 0,
-            qt1 = $qTree(),
-            qt2 = $qTree().parallel($$q.when(true));
+            qt1 = $qChain(),
+            qt2 = $qChain().parallel($$q.when(true));
 
           qt2.promise
             .then( function() {
@@ -673,10 +674,10 @@
 
     describe('notifications', function ()
     {
-      var $qTree;
+      var $qChain;
 
-      beforeEach(inject(function (_$qTree_) {
-        $qTree = _$qTree_;
+      beforeEach(inject(function (_$qChain_) {
+        $qChain = _$qChain_;
       }));
 
       it('should trigger onComplete callback for simple sequence', function() {
@@ -687,7 +688,7 @@
             start      : function() { return $$q.when(result); }
           };
 
-        $qTree().sequence( node, node ).start();
+        $qChain().sequence( node, node ).start();
 
         $timeout.flush();
         expect( result ).toBe( 18 );
@@ -706,7 +707,7 @@
             start      : function() { return $$q.when(result2); }
           };
 
-        $qTree().parallel( node1, node2 ).start();
+        $qChain().parallel( node1, node2 ).start();
         $timeout.flush();
 
         expect( result1 + result2 ).toBe( 18 );
@@ -721,9 +722,9 @@
             start      : function() { return $$q.when(result); }
           };
 
-        $qTree().sequence(
+        $qChain().sequence(
           node,
-          $qTree().sequence(node)
+          $qChain().sequence(node)
         )
           .start()
           .then(function() {
@@ -736,15 +737,204 @@
 
     });
 
+    describe('rejections', function() {
+      var $qChain, $$q;
+
+      beforeEach(inject(function (_$qChain_, _$$q_) {
+        $qChain = _$qChain_;
+        $$q = _$$q_;
+      }));
+
+      it('will abort a simple sequence',function(){
+        var dfd = $$q.defer(),
+            started = 0, onStart = function() {
+              started +=1;
+              return dfd.promise;
+            },
+            completed = 0,  onCompleted = function() {
+              completed += 1;
+            },
+            aborted = 0,  onAborted = function() {
+              aborted += 1;
+            };
+
+        $qChain().sequence({
+          start      : onStart,
+          onComplete : onCompleted
+        })
+        .start()
+        .then( onCompleted, onAborted )
+
+        dfd.reject("aborted");
+        $timeout.flush();
+
+        expect( started  ).toBe(1);
+        expect( completed ).toBe(0);
+
+      });
+
+      it('will abort a sequence chain',function(){
+        var dfd = $$q.defer(),
+          started   = 0, onStart     = function() { started +=1; },
+          completed = 0, onCompleted = function() { completed += 1; },
+          aborted   = 0, onAborted   = function() { aborted += 1; };
+
+        $qChain().sequence(
+          {
+            start      : function()
+            {
+              onStart();
+              return $$q.when(true);
+            },
+            onComplete : onCompleted
+          },
+          {
+            start      : function()
+            {
+              onStart();
+              return $$q.reject("abort")
+            },
+            onComplete : onCompleted
+          }
+        )
+        .start()
+        .then( onCompleted, onAborted )
+
+        dfd.reject("aborted");
+        $timeout.flush();
+
+        expect( started   ).toBe(2);
+        expect( completed ).toBe(1);
+        expect( aborted   ).toBe(1);
+
+      });
+
+      it('will abort a simple parallel',function(){
+        var dfd = $$q.defer(),
+          started = 0,
+          completed = 0,  onCompleted = function() {
+            completed += 1;
+          },
+          aborted = 0,  onAborted = function() {
+            aborted += 1;
+          };
+
+        $qChain().parallel(
+          {
+            start      : function()
+            {
+              started +=1;
+              return dfd.promise;
+            },
+            onComplete : onCompleted
+          }
+        )
+        .start()
+        .then( onCompleted, onAborted )
+
+        dfd.reject("aborted");
+        $timeout.flush();
+
+        expect( started  ).toBe(1);
+        expect( completed ).toBe(0);
+
+      });
+
+      it('will abort a parallel chain',function(){
+        var dfd = $$q.defer(),
+          started   = 0, onStart     = function() { started +=1; },
+          completed = 0, onCompleted = function() { completed += 1; },
+          aborted   = 0, onAborted   = function() { aborted += 1; };
+
+        $qChain().parallel(
+          {
+            start      : function()
+            {
+              onStart();
+              return $$q.when(true);
+            },
+            onComplete : onCompleted
+          },
+          {
+            start      : function()
+            {
+              onStart();
+              return $$q.reject("abort")
+            },
+            onComplete : onCompleted
+          }
+        )
+        .start()
+        .then( onCompleted, onAborted )
+
+        dfd.reject("aborted");
+        $timeout.flush();
+
+        expect( started   ).toBe(2);
+        expect( completed ).toBe(1);
+        expect( aborted   ).toBe(1);
+
+      });
+
+      it('will abort a complex parallel chain',inject(function($$q){
+        var dfd = $$q.defer(),
+          started   = 0, onStart     = function() { started +=1; },
+          completed = 0, onCompleted = function() { completed += 1; },
+          aborted   = 0, onAborted   = function() { aborted += 1;},
+          nodeGood  = {
+            start      : function() { onStart(); return $$q.when(true); },
+            onComplete : onCompleted
+          },
+          nodeBad = {
+            start      : function() { onStart(); return $$q.reject("abort"); },
+            onComplete : onCompleted
+          },
+          timeOutGood = function() {
+            onStart();
+            return $timeout(function(){
+              return $$q.when("done");
+            });
+          },
+          timeOutBad = function() {
+            onStart();
+            return $timeout(function(){
+              throw new Error("aborted")
+            });
+          };
+
+        $qChain().parallel(
+          nodeGood,
+          timeOutGood,
+          $qChain().sequence(
+            $$q.when(true),
+            timeOutGood,
+            nodeBad
+          ),
+          $$q.when(true)
+        )
+        .start()
+        .then( onCompleted, onAborted )
+
+        dfd.reject("aborted");
+        $timeout.flush();
+
+        expect( started   ).toBe(4);
+        expect( completed ).toBe(1);
+        expect( aborted   ).toBe(1);
+
+      }));
+
+    });
+
     describe('building trees', function ()
     {
-      var $qTree, $timeout;
+      var $qChain, $timeout;
 
-      beforeEach(inject(function (_$qTree_, _$timeout_) {
-        // Create instance of QTree without custom adaptor
+      beforeEach(inject(function (_$qChain_, _$timeout_) {
+        // Create instance of qChain without custom adaptor
         $timeout = _$timeout_;
-        $qTree = _$qTree_;
-        qTree = _$qTree_();
+        $qChain = _$qChain_;
+        qChain = _$qChain_();
       }));
 
       describe('after start()', function () {
@@ -762,10 +952,10 @@
               $timeout(onComplete),
               $$q.when(true),
               function() { return $timeout(onComplete); },
-              onComplete, $qTree()    // for unique parallel instance
+              onComplete, $qChain()    // for unique parallel instance
             ),
             $timeout(onComplete),
-            onComplete, $qTree()      // for unique sequence instance
+            onComplete, $qChain()      // for unique sequence instance
           ).start();
 
           $timeout.flush();
@@ -778,10 +968,10 @@
               result += 13;
             };
 
-          var timeline = $qTree().sequence(          // for unique sequence instance
+          var timeline = $qChain().sequence(          // for unique sequence instance
             $timeout(onComplete),
             $$q.when(true).then(onComplete),
-            $qTree().parallel(                   // for unique parallel instance
+            $qChain().parallel(                   // for unique parallel instance
               $timeout(onComplete),
               $$q.when(true),
               function() { return $timeout(onComplete); }
@@ -810,10 +1000,10 @@
               $timeout(onComplete),
               $$q.when(true),
               function() { return $timeout(onComplete); },
-              onComplete, $qTree()    // for unique parallel instance
+              onComplete, $qChain()    // for unique parallel instance
             ),
             $timeout(onComplete),
-            onComplete, $qTree()      // for unique sequence instance
+            onComplete, $qChain()      // for unique sequence instance
           ).start();
 
           $timeout.flush();
@@ -831,20 +1021,20 @@
     // ****************************
 
     function makeSequence() {
-      return buildTree( toArray(arguments), "sequence" );
+      return buildChain( toArray(arguments), "sequence" );
     }
 
     function makeParallel() {
-      return buildTree( toArray(arguments), "parallel" );
+      return buildChain( toArray(arguments), "parallel" );
     }
 
-    function buildTree(items, method)
+    function buildChain(items, method)
     {
-      var tree = qTree,
-        handler = items.pop();
+      var tree = qChain,
+          handler = items.pop();
 
-      // Check the last 1-2 args for a qTree instance and a handler
-      if ( isQTreeLike(handler) ) {
+      // Check the last 1-2 args for a qChain instance and a handler
+      if ( isQChainLink(handler) ) {
         tree = handler;
         handler = items.pop();
       }
@@ -867,7 +1057,7 @@
     return target && angular.isFunction(target.then);
   }
 
-  function isQTreeLike(target) {
+  function isQChainLink(target) {
     return target &&
       angular.isFunction(target.parallel) &&
       angular.isFunction(target.sequence) &&

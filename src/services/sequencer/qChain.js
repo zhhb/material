@@ -1,14 +1,14 @@
 (function(){
 
-    angular.module( 'ngQTree', ['ng'])
+    angular.module( 'ngQChain', ['ng'])
 
         /**
          * This service publish a function that will adapt a incoming element to be used as a
-         * node within the the qTree processing
+         * node within the the qChain processing
          *
-         * @returns Function to adapt() target elements as nodes in a qTree
+         * @returns Function to adapt() target elements as nodes in a qChain
          */
-        .service( "$$qTreeAdaptor", ['$$q', '$log', function( $$q, $log )
+        .service( "$$qChainAdaptor", ['$$q', '$log', function( $$q, $log )
         {
             var counter = 0;
 
@@ -29,7 +29,7 @@
                     {
                         // must return a Promise
                         return  isPromiseLike(target)       ? target               :
-                                isQTreeLike(target)         ? target.start()       :
+                                isQChainLink(target)         ? target.start()       :
                                 angular.isFunction(target)  ? $$q.when( target() ) :
                                 $$q.when( isNodeLike(target) ? target.start() : target);
                     },
@@ -41,7 +41,7 @@
 
                     id : function()
                     {
-                      if ( isPromiseLike(target) || isQTreeLike(target) || isNodeLike(target)){
+                      if ( isPromiseLike(target) || isQChainLink(target) || isNodeLike(target)){
                           if ( !target["$$id"] ) {
                             target["$$id"] = "target_" + counter++;
                           }
@@ -54,19 +54,19 @@
                         // When each target resolves, deliver notification via `onComplete` callbacks
                         $log.debug("Resolved target( " + self.id() + " )" );
 
-                        return (target.onComplete || angular.noop)(target, result);
+                        return target ? (target.onComplete || angular.noop)(target, result) : false;
                     }
                 };
             };
 
             /**
              * Is the target an instance of PromiseTree; generated via calls to
-             * `$$qTree().parallel()` or `$$qTree().sequence()`;
+             * `$$qChain().parallel()` or `$$qChain().sequence()`;
              *
              * @param target Object
              * @returns {boolean} True if instance of PromiseTree
              */
-            function isQTreeLike(target) {
+            function isQChainLink(target) {
                 return target &&
                     angular.isFunction(target.parallel) &&
                     angular.isFunction(target.sequence) &&
@@ -87,10 +87,10 @@
         }])
 
         /**
-         * $$qTree is a digest-independent, generator used for building sophisticated trees of promise chains
+         * $$qChain is a digest-independent, generator used for building sophisticated trees of promise chains
          * by creating on-demand promises for each node in the tree or list dataset.
          */
-        .service( "$qTree", ['$$q', '$$qTreeAdaptor', '$log', function( $$q, $$qTreeAdaptor, $log )
+        .service( "$qChain", ['$$q', '$$qChainAdaptor', '$log', function( $$q, $$qChainAdaptor, $log )
         {
             return function makeInstanceWith( adaptor )
             {
@@ -367,7 +367,7 @@
                         return val;
                     }
 
-                })(adaptor || $$qTreeAdaptor);
+                })(adaptor || $$qChainAdaptor);
             };
 
 
