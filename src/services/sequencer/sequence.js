@@ -1,6 +1,6 @@
 (function()
 {
-    angular.module('ngAnimateSequence', ['ngAnimate', 'ngQTree'])
+    angular.module('ngAnimateSequence', ['ngAnimate', 'ngQChain'])
 
         /**
          * $$animateDriver is the default, internal animation driver
@@ -257,21 +257,25 @@
          * Create a service that builds a sequential chain of promises to start an $animateQueue instances
          * NOTE: This sequence chain is NOT auto-started
          */
-        .factory( '$animateSequence', ['$qTree', function($qTree){
-            return function() {
-               return $qTree().sequence( extractList(arguments) );
-            };
-        }])
+        .factory( '$animateSequence', ['$qChain',
+            function($qChain){
+                return function() {
+                   return $qChain().sequence( extractList(arguments) );
+                };
+            }
+        ])
 
         /**
          * Create a service that builds a promise chain to start 1..n $animateQueue instances all to run in parallel
          * NOTE: This sequence chain is NOT auto-started
          */
-        .factory( '$animateGroup', ['$qTree', function($qTree){
-            return function() {
-                return $qTree().parallel( extractList(arguments) );
-            };
-        }]);
+        .factory( '$animateGroup', ['$qChain',
+            function($qChain){
+                return function() {
+                    return $qChain().parallel( extractList(arguments) );
+                };
+            }
+        ]);
 
 
 

@@ -385,7 +385,7 @@
           expect(result).toBe(15);
         });
 
-        it('should resolve a sequence( Object )', function () {
+        it('should resolve a sequence( Object, Object )', function () {
           var result = 0,
             node1 = { start: function () { result += 2; } },
             node2 = { start: function () { result += 3; } };
@@ -410,7 +410,7 @@
           expect(result).toBe(5);
         }));
 
-        it('should resolve complex sequence', inject(function($qChain) {
+        it('should resolve complex sequence(object, function, qChain)', inject(function($qChain) {
 
           var result=0,
             node = {
@@ -530,7 +530,7 @@
           expect(result).toBe(13);
         }));
 
-        it("should resolve a parallel( string )", function () {
+        it("should resolve a parallel( string, string )", function () {
           var result = 0;
 
           makeParallel( "Node1", "Node2", function () {
@@ -554,7 +554,7 @@
         });
 
 
-        it("should resolve a parallel( promise )", function () {
+        it("should resolve a parallel( promise, promise )", function () {
           var dfd = $$q.defer(),
             result = 0;
 
@@ -568,7 +568,7 @@
           expect(result).toBe(1);
         });
 
-        it("should not resolve a parallel( unresolved promise )", function () {
+        it("should not resolve a parallel( unresolved promise, promise )", function () {
           var dfd = $$q.defer(),
             result = 0;
 
@@ -580,7 +580,7 @@
           expect(result).toBe(0);
         });
 
-        it('should resolve a parallel( Function )', function () {
+        it('should resolve a parallel( Function, Function, Function )', function () {
           var result = 0,
             increment = function () {
               result += 1;
@@ -592,7 +592,7 @@
           expect(result).toBe(3);
         });
 
-        it('should not resolve a parallel( Function() -> unresolved Promise )', function () {
+        it('should not resolve a parallel( Function() -> unresolved Promise, promise )', function () {
           var result = 0,
             makePromise = function () {
               var dfd = $$q.defer();
@@ -636,7 +636,7 @@
           expect(result).toBe(20);
         });
 
-        it('should resolve a parallel( Object )', function () {
+        it('should resolve a parallel( Object, Object )', function () {
           var result = 0,
             node1 = { start: function () {  result += 2;  } },
             node2 = { start: function () {  result += 6;  } };
@@ -649,7 +649,7 @@
           expect(result).toBe(11);
         });
 
-        it('should resolve a parallel( qChain )', inject(function ($qChain) {
+        it('should resolve a parallel( qChain, qChain )', inject(function ($qChain) {
           var result = 0,
             qt1 = $qChain(),
             qt2 = $qChain().parallel($$q.when(true));
