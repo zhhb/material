@@ -95,6 +95,8 @@ module.exports = {
       'src/components/linearProgress/linearProgress.js',
 
       //Services
+      'src/services/sequencer/qTree.js',
+
       'src/services/decorators.js',
       'src/services/aria/aria.js',
       'src/services/attrBind/attrBind.js',
