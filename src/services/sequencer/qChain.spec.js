@@ -738,64 +738,60 @@
     });
 
     describe('rejections', function() {
-      var $qChain, $$q;
+      var $qChain, $$q, $timeout,
+          started = 0, completed = 0, aborted = 0,
+          resolvedQ = function() { return $$q.when(true)       },
+          rejectedQ = function() { return $$q.reject("abort"); },
+          onStart     = function(fn) { started +=1; return (fn ||noop)(); },
+          onCompleted = function() { completed += 1; },
+          onAborted   = function() { aborted += 1;},
+          makeNode    = function(fn) { return {
+            start      : function() { return onStart( fn ); },
+            onComplete : onCompleted
+          }},
+          resolvedTimeout = function() { $timeout(resolvedQ);  },
+          rejectedTimeout = function() { $timeout(rejectedQ);  },
+          timeOutGood = function() { return onStart( resolvedTimeout ); };
 
-      beforeEach(inject(function (_$qChain_, _$$q_) {
+
+      beforeEach(inject(function (_$qChain_, _$$q_, _$timeout_) {
         $qChain = _$qChain_;
-        $$q = _$$q_;
+        $$q      = _$$q_;
+        $timeout = _$timeout_;
+
+        started = 0;
+        completed = 0;
+        aborted = 0;
       }));
 
       it('will abort a simple sequence',function(){
-        var dfd = $$q.defer(),
-            started = 0, onStart = function() {
-              started +=1;
-              return dfd.promise;
-            },
-            completed = 0,  onCompleted = function() {
-              completed += 1;
-            },
-            aborted = 0,  onAborted = function() {
-              aborted += 1;
-            };
+        var dfd = $$q.defer();
 
-        $qChain().sequence({
-          start      : onStart,
-          onComplete : onCompleted
-        })
-        .start()
-        .then( onCompleted, onAborted )
+          $qChain().sequence(
+            makeNode( function() {
+              return dfd.promise;
+            })
+          )
+          .start()
+          .then( onCompleted, onAborted );
 
         dfd.reject("aborted");
         $timeout.flush();
 
-        expect( started  ).toBe(1);
+        expect( started   ).toBe(1);
         expect( completed ).toBe(0);
+        expect( aborted   ).toBe(1);
 
       });
 
       it('will abort a sequence chain',function(){
-        var dfd = $$q.defer(),
-          started   = 0, onStart     = function() { started +=1; },
-          completed = 0, onCompleted = function() { completed += 1; },
-          aborted   = 0, onAborted   = function() { aborted += 1; };
+        var dfd = $$q.defer();
 
         $qChain().sequence(
-          {
-            start      : function()
-            {
-              onStart();
-              return $$q.when(true);
-            },
-            onComplete : onCompleted
-          },
-          {
-            start      : function()
-            {
-              onStart();
-              return $$q.reject("abort")
-            },
-            onComplete : onCompleted
-          }
+          makeNode( resolvedQ ),
+          makeNode( function() {
+            return dfd.promise;
+          })
         )
         .start()
         .then( onCompleted, onAborted )
@@ -810,24 +806,13 @@
       });
 
       it('will abort a simple parallel',function(){
-        var dfd = $$q.defer(),
-          started = 0,
-          completed = 0,  onCompleted = function() {
-            completed += 1;
-          },
-          aborted = 0,  onAborted = function() {
-            aborted += 1;
-          };
+        var dfd = $$q.defer();
 
         $qChain().parallel(
+          makeNode( function()
           {
-            start      : function()
-            {
-              started +=1;
-              return dfd.promise;
-            },
-            onComplete : onCompleted
-          }
+            return dfd.promise;
+          })
         )
         .start()
         .then( onCompleted, onAborted )
@@ -841,28 +826,14 @@
       });
 
       it('will abort a parallel chain',function(){
-        var dfd = $$q.defer(),
-          started   = 0, onStart     = function() { started +=1; },
-          completed = 0, onCompleted = function() { completed += 1; },
-          aborted   = 0, onAborted   = function() { aborted += 1; };
+        var dfd = $$q.defer();
 
         $qChain().parallel(
+          makeNode( resolvedQ ),
+          makeNode( function()
           {
-            start      : function()
-            {
-              onStart();
-              return $$q.when(true);
-            },
-            onComplete : onCompleted
-          },
-          {
-            start      : function()
-            {
-              onStart();
-              return $$q.reject("abort")
-            },
-            onComplete : onCompleted
-          }
+            return dfd.promise;
+          })
         )
         .start()
         .then( onCompleted, onAborted )
@@ -876,53 +847,28 @@
 
       });
 
-      it('will abort a complex parallel chain',inject(function($$q){
-        var dfd = $$q.defer(),
-          started   = 0, onStart     = function() { started +=1; },
-          completed = 0, onCompleted = function() { completed += 1; },
-          aborted   = 0, onAborted   = function() { aborted += 1;},
-          nodeGood  = {
-            start      : function() { onStart(); return $$q.when(true); },
-            onComplete : onCompleted
-          },
-          nodeBad = {
-            start      : function() { onStart(); return $$q.reject("abort"); },
-            onComplete : onCompleted
-          },
-          timeOutGood = function() {
-            onStart();
-            return $timeout(function(){
-              return $$q.when("done");
-            });
-          },
-          timeOutBad = function() {
-            onStart();
-            return $timeout(function(){
-              throw new Error("aborted")
-            });
-          };
+      it('will abort a complex parallel chain',function(){
 
         $qChain().parallel(
-          nodeGood,
+          makeNode( resolvedQ ),
           timeOutGood,
           $qChain().sequence(
-            $$q.when(true),
+            resolvedQ(),
             timeOutGood,
-            nodeBad
+            makeNode( rejectedQ )
           ),
-          $$q.when(true)
+          resolvedQ()
         )
         .start()
         .then( onCompleted, onAborted )
 
-        dfd.reject("aborted");
         $timeout.flush();
 
         expect( started   ).toBe(4);
         expect( completed ).toBe(1);
         expect( aborted   ).toBe(1);
 
-      }));
+      });
 
     });
 
