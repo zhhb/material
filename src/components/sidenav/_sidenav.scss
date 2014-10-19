@@ -6,6 +6,7 @@ md-sidenav {
   z-index: $z-index-sidenav;
   background-color: white;
   overflow: auto;
+  transition: transform 0.3s ease-out;
 
   &.closed {
     display: none;
@@ -30,8 +31,6 @@ md-sidenav {
     display: block;
     transform: translate3d(0, 0, 0);
   }
-
-  @extend .material-sidenav-left;
 }
 .md-sidenav-backdrop.locked-open {
   display: none;
