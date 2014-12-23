@@ -6,12 +6,12 @@ $tabs-disabled-color: $foreground-quarternary-color !default;
 $tabs-highlight-color: $primary-color-palette-contrast-color !default;
 
 md-tabs.md-THEME_NAME-theme {
-  .md-header {
+  md-tab-wrapper {
     background-color: '{{primary-color}}';
   }
 
   &.md-accent {
-    .md-header {
+    md-tab-wrapper {
       background-color: '{{accent-color}}';
     }
 
@@ -24,7 +24,7 @@ md-tabs.md-THEME_NAME-theme {
   }
 
   &.md-warn {
-    .md-header {
+    md-tab-wrapper {
       background-color: '{{warn-color}}';
     }
 
@@ -37,9 +37,9 @@ md-tabs.md-THEME_NAME-theme {
   }
 
 
-  md-tabs-ink-bar {
-    color: $tabs-highlight-color;
-    background: $tabs-highlight-color;
+  md-ink-bar {
+    color: '{{accent-contrast}}';
+    background: '{{accent-contrast}}';
   }
 
   md-tab {
@@ -55,7 +55,7 @@ md-tabs.md-THEME_NAME-theme {
       background-color: '{{primary-contrast-0.1}}';
     }
     .md-ripple-container {
-      color: $tabs-highlight-color;
+      color: '{{accent-contrast}}';
     }
   }
 }

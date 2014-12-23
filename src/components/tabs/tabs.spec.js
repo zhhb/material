@@ -12,15 +12,16 @@ describe('<md-tabs>', function() {
             'to be the active tab. Failures: ' + fails.join(', ');
         };
 
-        if (!actual.hasClass('active')) {
+        if (!actual.hasClass('md-active')) {
           fails.push('does not have active class');
         }
         if (actual.attr('aria-selected') != 'true') {
           fails.push('aria-selected is not true');
-        } 
-        if (actual.attr('tabindex') != '0') {
-          fails.push('tabindex is not 0');
         }
+        //-- tabindex is no longer present on md-tab-item
+        //if (actual.attr('tabindex') != '0') {
+        //  fails.push('tabindex is not 0');
+        //}
         return fails.length === 0;
       }
     });
@@ -49,7 +50,7 @@ describe('<md-tabs>', function() {
             '<md-tab></md-tab>' +
             '<md-tab></md-tab>' +
             '</md-tabs>');
-      expect(tabs.find('md-tab').eq(0)).toBeActiveTab();
+      expect(tabs.find('md-tab-item').eq(0)).toBeActiveTab();
     });
 
     it('should select & focus tab on click', inject(function($document) {
@@ -58,15 +59,15 @@ describe('<md-tabs>', function() {
             '<md-tab></md-tab>' +
             '<md-tab ng-disabled="true"></md-tab>' +
             '</md-tabs>');
-      var tabItems = tabs.find('md-tab');
+      var tabItems = tabs.find('md-tab-item');
 
-      tabs.find('md-tab').eq(1).triggerHandler('click');
+      tabs.find('md-tab-item').eq(1).triggerHandler('click');
       expect(tabItems.eq(1)).toBeActiveTab();
-      expect($document.activeElement).toBe(tabItems[1]);
+      expect($document.activeElement).toBe(tabs.find('md-tab')[1]);
       
-      tabs.find('md-tab').eq(0).triggerHandler('click');
+      tabs.find('md-tab-item').eq(0).triggerHandler('click');
       expect(tabItems.eq(0)).toBeActiveTab();
-      expect($document.activeElement).toBe(tabItems[0]);
+      expect($document.activeElement).toBe(tabs.find('md-tab')[0]);
     }));
 
     it('should focus tab on arrow if tab is enabled', inject(function($document, $mdConstant, $timeout) {
@@ -75,30 +76,35 @@ describe('<md-tabs>', function() {
                        '<md-tab ng-disabled="true"></md-tab>' +
                        '<md-tab></md-tab>' +
                        '</md-tabs>');
-      var tabItems = tabs.find('md-tab');
+      var tabItems = tabs.find('md-tab-item');
+
       expect(tabItems.eq(0)).toBeActiveTab();
 
       // Boundary case, do nothing
-      triggerKeydown(tabItems.eq(0), $mdConstant.KEY_CODE.LEFT_ARROW);
+      triggerKeydown(tabs.find('md-tab').eq(0), $mdConstant.KEY_CODE.LEFT_ARROW);
       expect(tabItems.eq(0)).toBeActiveTab();
 
       // Tab 0 should still be active, but tab 2 focused (skip tab 1 it's disabled)
-      triggerKeydown(tabItems.eq(0), $mdConstant.KEY_CODE.RIGHT_ARROW);
+      triggerKeydown(tabs.find('md-tab').eq(0), $mdConstant.KEY_CODE.RIGHT_ARROW);
       expect(tabItems.eq(0)).toBeActiveTab();
-      $timeout.flush();
-      expect($document.activeElement).toBe(tabItems[2]);
+      expect($document.activeElement).toBe(tabs.find('md-tab')[2]);
+
+      triggerKeydown(tabs.find('md-tab').eq(2), $mdConstant.KEY_CODE.ENTER);
+      expect(tabItems.eq(2)).toBeActiveTab();
 
       // Boundary case, do nothing
-      triggerKeydown(tabItems.eq(0), $mdConstant.KEY_CODE.RIGHT_ARROW);
-      expect(tabItems.eq(0)).toBeActiveTab();
-      $timeout.flush();
-      expect($document.activeElement).toBe(tabItems[2]);
+      triggerKeydown(tabs.find('md-tab').eq(0), $mdConstant.KEY_CODE.RIGHT_ARROW);
+      expect(tabItems.eq(2)).toBeActiveTab();
+      expect($document.activeElement).toBe(tabs.find('md-tab')[2]);
+
+      triggerKeydown(tabs.find('md-tab').eq(2), $mdConstant.KEY_CODE.ENTER);
+      expect(tabItems.eq(2)).toBeActiveTab();
 
       // Skip tab 1 again, it's disabled
-      triggerKeydown(tabItems.eq(2), $mdConstant.KEY_CODE.LEFT_ARROW);
+      triggerKeydown(tabs.find('md-tab').eq(2), $mdConstant.KEY_CODE.LEFT_ARROW);
+      expect($document.activeElement).toBe(tabs.find('md-tab')[0]);
+      triggerKeydown(tabs.find('md-tab').eq(0), $mdConstant.KEY_CODE.ENTER);
       expect(tabItems.eq(0)).toBeActiveTab();
-      $timeout.flush();
-      expect($document.activeElement).toBe(tabItems[0]);
 
     }));
 
@@ -107,12 +113,13 @@ describe('<md-tabs>', function() {
                        '<md-tab></md-tab>' +
                        '<md-tab></md-tab>' +
                        '</md-tabs>');
-      var tabItems = tabs.find('md-tab');
+      var tabItems = tabs.find('md-tab-item');
+      tabs.find('md-tab-item').eq(0).triggerHandler('click');
 
-      triggerKeydown(tabItems.eq(1), $mdConstant.KEY_CODE.ENTER);
+      triggerKeydown(tabs.find('md-tab').eq(1), $mdConstant.KEY_CODE.ENTER);
       expect(tabItems.eq(1)).toBeActiveTab();
 
-      triggerKeydown(tabItems.eq(0), $mdConstant.KEY_CODE.SPACE);
+      triggerKeydown(tabs.find('md-tab').eq(0), $mdConstant.KEY_CODE.SPACE);
       expect(tabItems.eq(0)).toBeActiveTab();
     }));
 
@@ -121,15 +128,15 @@ describe('<md-tabs>', function() {
                        '<md-tab label="label1!">content1!</md-tab>' +
                        '<md-tab label="label2!">content2!</md-tab>' +
                        '</md-tabs>');
-      var tabItems = tabs.find('md-tab');
-      var contents = angular.element(tabs[0].querySelectorAll('.md-tab-content'));
+      var tabItems = tabs.find('md-tab-item');
+      var contents = angular.element(tabs[0].querySelectorAll('md-tab-content'));
 
-      expect(contents.eq(0).scope().$$disconnected).toBeFalsy();
-      expect(contents.eq(1).scope().$$disconnected).toBeTruthy();
+      expect(contents.eq(0).children().eq(0).scope().$$disconnected).toBeFalsy();
+      expect(contents.eq(1).children().eq(0).scope().$$disconnected).toBeTruthy();
 
       tabItems.eq(1).triggerHandler('click');
-      expect(contents.eq(0).scope().$$disconnected).toBeTruthy();
-      expect(contents.eq(1).scope().$$disconnected).toBeFalsy();
+      expect(contents.eq(0).children().eq(0).scope().$$disconnected).toBeTruthy();
+      expect(contents.eq(1).children().eq(0).scope().$$disconnected).toBeFalsy();
     });
 
     it('should bind to selected', function() {
@@ -138,7 +145,7 @@ describe('<md-tabs>', function() {
                        '<md-tab></md-tab>' +
                        '<md-tab></md-tab>' +
                        '</md-tabs>');
-      var tabItems = tabs.find('md-tab');
+      var tabItems = tabs.find('md-tab-item');
 
       expect(tabItems.eq(0)).toBeActiveTab();
       expect(tabs.scope().current).toBe(0);
@@ -156,7 +163,7 @@ describe('<md-tabs>', function() {
                        '<md-tab md-active="active1"></md-tab>' +
                        '<md-tab md-active="active2"></md-tab>' +
                        '</md-tabs>');
-      var tabItems = tabs.find('md-tab');
+      var tabItems = tabs.find('md-tab-item');
 
       tabs.scope().$apply('active2 = true');
       expect(tabItems.eq(2)).toBeActiveTab();
@@ -171,7 +178,7 @@ describe('<md-tabs>', function() {
                        '<md-tab ng-disabled="disabled0"></md-tab>' +
                        '<md-tab ng-disabled="disabled1"></md-tab>' +
                        '</md-tabs>');
-      var tabItems = tabs.find('md-tab');
+      var tabItems = tabs.find('md-tab-item');
 
       expect(tabItems.eq(0)).toBeActiveTab();
 
