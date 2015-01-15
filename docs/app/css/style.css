@@ -151,10 +151,15 @@ code:not(.highlight) {
   -webkit-margin-before: 0;
   -webkit-margin-after: 0;
 }
-
+docs-demo {
+  display: block;
+  margin-top: 16px;
+}
+docs-demo:first-of-type {
+  margin-top: 0;
+}
 .demo-container {
   border-radius: 4px;
-  margin-top: 16px;
   -webkit-transition: 0.02s padding cubic-bezier(0.35, 0, 0.25, 1);
   transition: 0.02s padding cubic-bezier(0.35, 0, 0.25, 1);
   position: relative;
