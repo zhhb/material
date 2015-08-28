@@ -1,20 +1,19 @@
 describe('md-button', function() {
 
-  beforeEach(TestUtil.mockRaf);
   beforeEach(module('material.components.button'));
 
   it('should convert attributes on an md-button to attributes on the generated button', inject(function($compile, $rootScope) {
     var button = $compile('<md-button hide hide-sm></md-button>')($rootScope);
     $rootScope.$apply();
-    expect(button[0].hasAttribute('hide')).toBe(true);
-    expect(button[0].hasAttribute('hide-sm')).toBe(true);
+    expect(button[0]).toHaveClass('hide');
+    expect(button[0]).toHaveClass('hide-sm');
   }));
 
   it('should only have one ripple container when a custom ripple color is set', inject(function ($compile, $rootScope, $timeout) {
     var button = $compile('<md-button md-ink-ripple="#f00">button</md-button>')($rootScope);
-    var scope = button.eq(0).scope();
-    scope._onInput({ isFirst: true, eventType: Hammer.INPUT_START, center: { x: 0, y: 0 } });
-    expect(button[0].getElementsByClassName('md-ripple-container').length).toBe(1);
+
+    button.triggerHandler({ type: '$md.pressdown', pointer: { x: 0, y: 0 } });
+    expect(button[0].getElementsByClassName('md-ripple-container').length).toBe(0);
   }));
 
 
@@ -24,12 +23,32 @@ describe('md-button', function() {
     $rootScope.$apply();
     expect($log.warn).toHaveBeenCalled();
 
-    $log.warn.reset();
+    $log.warn.calls.reset();
     button = $compile('<md-button aria-label="something"><md-icon></md-icon></md-button>')($rootScope);
     $rootScope.$apply();
     expect($log.warn).not.toHaveBeenCalled();
   }));
 
+  it('should allow attribute directive syntax', inject(function($compile, $rootScope) {
+    var button = $compile('<a md-button href="https://google.com">google</a>')($rootScope.$new());
+    expect(button.hasClass('md-button')).toBe(true);
+  }));
+
+  it('should not set focus state on mousedown', inject(function ($compile, $rootScope){
+    var button = $compile('<md-button>')($rootScope.$new());
+    $rootScope.$apply();
+    button.triggerHandler('mousedown');
+    expect(button[0]).not.toHaveClass('md-focused');
+  }));
+
+  it('should set focus state on focus and remove on blur', inject(function ($compile, $rootScope){
+    var button = $compile('<md-button>')($rootScope.$new());
+    $rootScope.$apply();
+    button.triggerHandler('focus');
+    expect(button[0]).toHaveClass('md-focused');
+    button.triggerHandler('blur');
+    expect(button[0]).not.toHaveClass('md-focused');
+  }));
 
   describe('with href or ng-href', function() {
 
@@ -41,6 +60,18 @@ describe('md-button', function() {
 
     it('should be anchor if ng-href attr', inject(function($compile, $rootScope) {
       var button = $compile('<md-button ng-href="/link">')($rootScope.$new());
+      $rootScope.$apply();
+      expect(button[0].tagName.toLowerCase()).toEqual('a');
+    }));
+
+    it('should be anchor if ui-sref attr', inject(function($compile, $rootScope) {
+      var button = $compile('<md-button ui-sref="state">')($rootScope.$new());
+      $rootScope.$apply();
+      expect(button[0].tagName.toLowerCase()).toEqual('a');
+    }));
+
+    it('should be anchor if ng-link attr', inject(function($compile, $rootScope) {
+      var button = $compile('<md-button ng-link="component">')($rootScope.$new());
       $rootScope.$apply();
       expect(button[0].tagName.toLowerCase()).toEqual('a');
     }));
@@ -84,6 +115,30 @@ describe('md-button', function() {
       $rootScope.$apply();
 
       expect(button.attr('tabindex')).toBe("-1");
+    }));
+
+    it('should not trigger click on button when disabled', inject(function ($compile, $rootScope) {
+      var clicked = false;
+      var onClick = function(){ clicked = true;};
+      var scope   = angular.extend( $rootScope.$new(), { isDisabled : true, onClick : onClick} );
+
+      var element = $compile('<md-button ng-disabled="isDisabled" ng-click="onClick()">button</md-button>')(scope);
+      $rootScope.$apply();
+
+      element.find('button').triggerHandler('click');
+      expect(clicked).toBe(false);
+    }));
+
+    it('should not trigger click on anchor when disabled', inject(function ($compile, $rootScope) {
+      var clicked = false;
+      var onClick = function(){ clicked = true;};
+      var scope   = angular.extend( $rootScope.$new(), { isDisabled : true, onClick : onClick} );
+
+      var element = $compile('<md-button ng-disabled="isDisabled" ng-href="#" ng-click="onClick()">button</md-button>')(scope);
+      $rootScope.$apply();
+
+      element.find('a').triggerHandler('click');
+      expect(clicked).toBe(false);
     }));
 
   });

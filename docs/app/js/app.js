@@ -1,12 +1,13 @@
-var DocsApp = angular.module('docsApp', ['ngMaterial', 'ngRoute', 'angularytics', 'ngMessages'])
+var DocsApp = angular.module('docsApp', [ 'angularytics', 'ngRoute', 'ngMessages', 'ngMaterial' ])
 
 .config([
+  'SERVICES',
   'COMPONENTS',
   'DEMOS',
   'PAGES',
   '$routeProvider',
   '$mdThemingProvider',
-function(COMPONENTS, DEMOS, PAGES, $routeProvider, $mdThemingProvider) {
+function(SERVICES, COMPONENTS, DEMOS, PAGES, $routeProvider, $mdThemingProvider) {
   $routeProvider
     .when('/', {
       templateUrl: 'partials/home.tmpl.html'
@@ -15,11 +16,51 @@ function(COMPONENTS, DEMOS, PAGES, $routeProvider, $mdThemingProvider) {
       templateUrl: function(params){
         return 'partials/layout-' + params.tmpl + '.tmpl.html';
       }
+    })
+    .when('/layout/', {
+      redirectTo: function() {
+        return "/layout/container";
+      }
+    })
+    .when('/demo/', {
+      redirectTo: function() {
+        return DEMOS[0].url;
+      }
+    })
+    .when('/api/', {
+      redirectTo: function() {
+        return COMPONENTS[0].docs[0].url;
+      }
+    })
+    .when('/getting-started', {
+      templateUrl: 'partials/getting-started.tmpl.html'
     });
-
+  $mdThemingProvider.definePalette('docs-blue', $mdThemingProvider.extendPalette('blue', {
+      '50':   '#DCEFFF',
+      '100':  '#AAD1F9',
+      '200':  '#7BB8F5',
+      '300':  '#4C9EF1',
+      '400':  '#1C85ED',
+      '500':  '#106CC8',
+      '600':  '#0159A2',
+      '700':  '#025EE9',
+      '800':  '#014AB6',
+      '900':  '#013583',
+      'contrastDefaultColor': 'light',
+      'contrastDarkColors': '50 100 200 A100',
+      'contrastStrongLightColors': '300 400 A200 A400'
+  }));
+  $mdThemingProvider.definePalette('docs-red', $mdThemingProvider.extendPalette('red', {
+    'A100': '#DE3641'
+  }));
 
   $mdThemingProvider.theme('docs-dark', 'default')
+    .primaryPalette('yellow')
     .dark();
+
+  $mdThemingProvider.theme('default')
+      .primaryPalette('docs-blue')
+      .accentPalette('docs-red');
 
   angular.forEach(PAGES, function(pages, area) {
     angular.forEach(pages, function(page) {
@@ -42,6 +83,18 @@ function(COMPONENTS, DEMOS, PAGES, $routeProvider, $mdThemingProvider) {
         },
         controller: 'ComponentDocCtrl'
       });
+    });
+  });
+
+  angular.forEach(SERVICES, function(service) {
+    service.url = '/' + service.url;
+    $routeProvider.when(service.url, {
+      templateUrl: service.outputPath,
+      resolve: {
+        component: function() { return undefined; },
+        doc: function() { return service; }
+      },
+      controller: 'ComponentDocCtrl'
     });
   });
 
@@ -79,33 +132,91 @@ function(Angularytics, $rootScope,$timeout) {
 }])
 
 .factory('menu', [
+  'SERVICES',
   'COMPONENTS',
   'DEMOS',
   'PAGES',
   '$location',
   '$rootScope',
-function(COMPONENTS, DEMOS, PAGES, $location, $rootScope) {
+  '$http',
+  '$window',
+function(SERVICES, COMPONENTS, DEMOS, PAGES, $location, $rootScope, $http, $window) {
+
+  var version = {};
 
   var sections = [{
-    name: 'Layout',
-    pages: [{
-      name: 'Container Elements',
-      id: 'layoutContainers',
-      url: '/layout/container'
-    },{
-      name: 'Grid System',
-      id: 'layoutGrid',
-      url: '/layout/grid'
-    },{
-      name: 'Child Alignment',
-      id: 'layoutAlign',
-      url: '/layout/alignment'
-    },{
-      name: 'Options',
-      id: 'layoutOptions',
-      url: '/layout/options'
-    }]
+    name: 'Getting Started',
+    url: '/getting-started',
+    type: 'link'
   }];
+
+  var demoDocs = [];
+  angular.forEach(DEMOS, function(componentDemos) {
+    demoDocs.push({
+      name: componentDemos.label,
+      url: componentDemos.url
+    });
+  });
+
+  sections.push({
+    name: 'Demos',
+    pages: demoDocs.sort(sortByName),
+    type: 'toggle'
+  });
+
+  sections.push();
+
+  sections.push({
+    name: 'Customization',
+    type: 'heading',
+    children: [
+      {
+        name: 'CSS',
+        type: 'toggle',
+        pages: [{
+            name: 'Typography',
+            url: '/CSS/typography',
+            type: 'link'
+          },
+          {
+            name : 'Button',
+            url: '/CSS/button',
+            type: 'link'
+          },
+          {
+            name : 'Checkbox',
+            url: '/CSS/checkbox',
+            type: 'link'
+          }]
+      },
+      {
+        name: 'Theming',
+        type: 'toggle',
+        pages: [
+          {
+            name: 'Introduction and Terms',
+            url: '/Theming/01_introduction',
+            type: 'link'
+          },
+          {
+            name: 'Declarative Syntax',
+            url: '/Theming/02_declarative_syntax',
+            type: 'link'
+          },
+          {
+            name: 'Configuring a Theme',
+            url: '/Theming/03_configuring_a_theme',
+            type: 'link'
+          },
+          {
+            name: 'Multiple Themes',
+            url: '/Theming/04_multiple_themes',
+            type: 'link'
+          }
+        ]
+      }
+    ]
+  });
 
   var docsByModule = {};
   var apiDocs = {};
@@ -119,37 +230,52 @@ function(COMPONENTS, DEMOS, PAGES, $location, $rootScope) {
       docsByModule[doc.module].push(doc);
     });
   });
-  var demoDocs = [];
-  angular.forEach(DEMOS, function(componentDemos) {
-    demoDocs.push({
-      name: componentDemos.label,
-      url: componentDemos.url
-    });
-    (docsByModule[componentDemos.name] || []).forEach(function(doc) {
-      doc.hasDemo = true;
-    });
-  });
 
-  sections.unshift({
-    name: 'Demos',
-    pages: demoDocs.sort(sortByName)
-  });
+  SERVICES.forEach(function(service) {
+    if (angular.isDefined(service.private)) return;
+    apiDocs[service.type] = apiDocs[service.type] || [];
+    apiDocs[service.type].push(service);
 
-  angular.forEach(PAGES, function(pages, area) {
-    sections.push({
-      name: area,
-      pages: pages
-    });
+    docsByModule[service.module] = docsByModule[service.module] || [];
+    docsByModule[service.module].push(service);
   });
 
   sections.push({
-    name: 'Services',
-    pages: apiDocs.service.sort(sortByName)
+    name: 'API Reference',
+    type: 'heading',
+    children: [
+    {
+      name: 'Layout',
+      type: 'toggle',
+      pages: [{
+        name: 'Container Elements',
+        id: 'layoutContainers',
+        url: '/layout/container'
+      },{
+        name: 'Grid System',
+        id: 'layoutGrid',
+        url: '/layout/grid'
+      },{
+        name: 'Child Alignment',
+        id: 'layoutAlign',
+        url: '/layout/alignment'
+      },{
+        name: 'Options',
+        id: 'layoutOptions',
+        url: '/layout/options'
+      }]
+    },
+    {
+      name: 'Services',
+      pages: apiDocs.service.sort(sortByName),
+      type: 'toggle'
+    },{
+      name: 'Directives',
+      pages: apiDocs.directive.sort(sortByName),
+      type: 'toggle'
+    }]
   });
-  sections.push({
-    name: 'Directives',
-    pages: apiDocs.directive.sort(sortByName)
-  });
+
   function sortByName(a,b) {
     return a.name < b.name ? -1 : 1;
   }
@@ -158,7 +284,68 @@ function(COMPONENTS, DEMOS, PAGES, $location, $rootScope) {
 
   $rootScope.$on('$locationChangeSuccess', onLocationChange);
 
+  $http.get("/docs.json")
+      .success(function(response) {
+        var versionId = getVersionIdFromPath();
+        var head = { type: 'version', url: '/HEAD', id: 'head', name: 'HEAD (master)', github: '' };
+        var commonVersions = versionId === 'head' ? [] : [ head ];
+        var knownVersions = getAllVersions();
+        var listVersions = knownVersions.filter(removeCurrentVersion);
+        var currentVersion = getCurrentVersion();
+        version.current = currentVersion;
+        sections.unshift({
+          name: 'Documentation Version',
+          type: 'heading',
+          className: 'version-picker',
+          children: [ {
+            name: currentVersion.name,
+            type: 'toggle',
+            pages: commonVersions.concat(listVersions)
+          } ]
+        });
+        function removeCurrentVersion (version) {
+          switch (versionId) {
+            case version.id: return false;
+            case 'latest': return !version.latest;
+            default: return true;
+          }
+        }
+        function getAllVersions () {
+          return response.versions.map(function(version) {
+            var latest = response.latest === version;
+            return {
+              type: 'version',
+              url: '/' + version,
+              name: getVersionFullString({ id: version, latest: latest }),
+              id: version,
+              latest: latest,
+              github: 'tree/v' + version
+            };
+          });
+        }
+        function getVersionFullString (version) {
+          return version.latest
+              ? 'Latest Release (' + version.id + ')'
+              : 'Release ' + version.id;
+        }
+        function getCurrentVersion () {
+          switch (versionId) {
+            case 'head': return head;
+            case 'latest': return knownVersions.filter(getLatest)[0];
+            default: return knownVersions.filter(getVersion)[0];
+          }
+          function getLatest (version) { return version.latest; }
+          function getVersion (version) { return versionId === version.id; }
+        }
+        function getVersionIdFromPath () {
+          var path = $window.location.pathname;
+          if (path.length < 2) path = 'HEAD';
+          return path.match(/[^\/]+/)[0].toLowerCase();
+        }
+      });
+
   return self = {
+    version:  version,
     sections: sections,
 
     selectSection: function(section) {
@@ -172,11 +359,10 @@ function(COMPONENTS, DEMOS, PAGES, $location, $rootScope) {
     },
 
     selectPage: function(section, page) {
-      page && page.url && $location.path(page.url);
       self.currentSection = section;
       self.currentPage = page;
     },
-    isPageSelected: function(section, page) {
+    isPageSelected: function(page) {
       return self.currentPage === page;
     }
   };
@@ -187,21 +373,121 @@ function(COMPONENTS, DEMOS, PAGES, $location, $rootScope) {
   }
 
   function onLocationChange() {
-    var activated = false;
     var path = $location.path();
-    sections.forEach(function(section) {
-      section.pages.forEach(function(page) {
-        if (path === page.url) {
-          self.selectSection(section);
-          self.selectPage(section, page);
-          activated = true;
-        }
-      });
-    });
-    if (!activated) {
-      self.selectSection(sections[3]);
+    var introLink = {
+      name: "Introduction",
+      url:  "/",
+      type: "link"
+    };
+
+    if (path == '/') {
+      self.selectSection(introLink);
+      self.selectPage(introLink, introLink);
+      return;
     }
+
+    var matchPage = function(section, page) {
+      if (path === page.url) {
+        self.selectSection(section);
+        self.selectPage(section, page);
+      }
+    };
+
+    sections.forEach(function(section) {
+      if(section.children) {
+        // matches nested section toggles, such as API or Customization
+        section.children.forEach(function(childSection){
+          if(childSection.pages){
+            childSection.pages.forEach(function(page){
+              matchPage(childSection, page);
+            });
+          }
+        });
+      }
+      else if(section.pages) {
+        // matches top-level section toggles, such as Demos
+        section.pages.forEach(function(page) {
+          matchPage(section, page);
+        });
+      }
+      else if (section.type === 'link') {
+        // matches top-level links, such as "Getting Started"
+        matchPage(section, section);
+      }
+    });
   }
+}])
+
+.directive('menuLink', function() {
+  return {
+    scope: {
+      section: '='
+    },
+    templateUrl: 'partials/menu-link.tmpl.html',
+    link: function($scope, $element) {
+      var controller = $element.parent().controller();
+
+      $scope.isSelected = function() {
+        return controller.isSelected($scope.section);
+      };
+
+      $scope.focusSection = function() {
+        // set flag to be used later when
+        // $locationChangeSuccess calls openPage()
+        controller.autoFocusContent = true;
+      };
+    }
+  };
+})
+
+.directive('menuToggle', [ '$timeout', function($timeout) {
+  return {
+    scope: {
+      section: '='
+    },
+    templateUrl: 'partials/menu-toggle.tmpl.html',
+    link: function($scope, $element) {
+      var controller = $element.parent().controller();
+      var $ul = $element.find('ul');
+      var originalHeight;
+
+      $scope.isOpen = function() {
+        return controller.isOpen($scope.section);
+      };
+      $scope.toggle = function() {
+        controller.toggleOpen($scope.section);
+      };
+      $scope.$watch(
+          function () {
+            return controller.isOpen($scope.section);
+          },
+          function (open) {
+            var $ul = $element.find('ul');
+            var targetHeight = open ? getTargetHeight() : 0;
+            $timeout(function () {
+              $ul.css({ height: targetHeight + 'px' });
+            }, 0, false);
+
+            function getTargetHeight () {
+              var targetHeight;
+              $ul.addClass('no-transition');
+              $ul.css('height', '');
+              targetHeight = $ul.prop('clientHeight');
+              $ul.css('height', 0);
+              $ul.removeClass('no-transition');
+              return targetHeight;
+            }
+          }
+      );
+
+
+      var parentNode = $element[0].parentNode.parentNode.parentNode;
+      if(parentNode.classList.contains('parent-list-item')) {
+        var heading = parentNode.querySelector('h2');
+        $element[0].firstChild.setAttribute('aria-describedby', heading.id);
+      }
+    }
+  };
 }])
 
 .controller('DocsCtrl', [
@@ -214,65 +500,119 @@ function(COMPONENTS, DEMOS, PAGES, $location, $rootScope) {
   'menu',
   '$location',
   '$rootScope',
-function($scope, COMPONENTS, BUILDCONFIG, $mdSidenav, $timeout, $mdDialog, menu, $location, $rootScope) {
+  '$window',
+  '$log',
+function($scope, COMPONENTS, BUILDCONFIG, $mdSidenav, $timeout, $mdDialog, menu, $location, $rootScope, $window, $log) {
+  var self = this;
+
   $scope.COMPONENTS = COMPONENTS;
   $scope.BUILDCONFIG = BUILDCONFIG;
-
   $scope.menu = menu;
+
+  $scope.path = path;
+  $scope.goHome = goHome;
+  $scope.openMenu = openMenu;
+  $scope.closeMenu = closeMenu;
+  $scope.isSectionSelected = isSectionSelected;
+
+  $rootScope.$on('$locationChangeSuccess', openPage);
+  $scope.focusMainContent = focusMainContent;
+
+  //-- Define a fake model for the related page selector
+  Object.defineProperty($rootScope, "relatedPage", {
+    get: function () { return null; },
+    set: angular.noop,
+    enumerable: true,
+    configurable: true
+  });
+  $rootScope.redirectToUrl = function (url) {
+    $window.location.hash = url;
+    $timeout(function () { $rootScope.relatedPage = null; }, 100);
+  };
+
+  // Methods used by menuLink and menuToggle directives
+  this.isOpen = isOpen;
+  this.isSelected = isSelected;
+  this.toggleOpen = toggleOpen;
+  this.autoFocusContent = false;
+
 
   var mainContentArea = document.querySelector("[role='main']");
 
-  $rootScope.$on('$locationChangeSuccess', openPage);
+  // *********************
+  // Internal methods
+  // *********************
 
-  $scope.closeMenu = function() {
+  function closeMenu() {
     $timeout(function() { $mdSidenav('left').close(); });
-  };
-  $scope.openMenu = function() {
+  }
+
+  function openMenu() {
     $timeout(function() { $mdSidenav('left').open(); });
-  };
+  }
 
-  $scope.path = function() {
+  function path() {
     return $location.path();
-  };
+  }
 
-  $scope.goHome = function($event) {
+  function goHome($event) {
     menu.selectPage(null, null);
     $location.path( '/' );
-  };
+  }
 
   function openPage() {
     $scope.closeMenu();
-    mainContentArea.focus();
+
+    if (self.autoFocusContent) {
+      focusMainContent();
+      self.autoFocusContent = false;
+    }
+  }
+
+  function focusMainContent($event) {
+    // prevent skip link from redirecting
+    if ($event) { $event.preventDefault(); }
+
+    $timeout(function(){
+      mainContentArea.focus();
+    },90);
+
+  }
+
+  function isSelected(page) {
+    return menu.isPageSelected(page);
+  }
+
+  function isSectionSelected(section) {
+    var selected = false;
+    var openedSection = menu.openedSection;
+    if(openedSection === section){
+      selected = true;
+    }
+    else if(section.children) {
+      section.children.forEach(function(childSection) {
+        if(childSection === openedSection){
+          selected = true;
+        }
+      });
+    }
+    return selected;
+  }
+
+  function isOpen(section) {
+    return menu.isSectionSelected(section);
+  }
+
+  function toggleOpen(section) {
+    menu.toggleSelectSection(section);
   }
 }])
 
 .controller('HomeCtrl', [
   '$scope',
   '$rootScope',
-  '$http',
-function($scope, $rootScope, $http) {
+function($scope, $rootScope) {
   $rootScope.currentComponent = $rootScope.currentDoc = null;
-
-  $scope.version = "";
-  $scope.versionURL = "";
-
-  // Load build version information; to be
-  // used in the header bar area
-  var now = Math.round(new Date().getTime()/1000);
-  var versionFile = "version.json" + "?ts=" + now;
-
-  $http.get("version.json")
-    .then(function(response){
-      var sha = response.data.sha || "";
-      var url = response.data.url;
-
-      if (sha) {
-        $scope.versionURL = url + sha;
-        $scope.version = sha.substr(0,6);
-      }
-    });
-
-
 }])
 
 
@@ -290,6 +630,7 @@ function($rootScope) {
 function($scope, $attrs, $location, $rootScope) {
   $rootScope.currentComponent = $rootScope.currentDoc = null;
 
+  $scope.exampleNotEditable = true;
   $scope.layoutDemo = {
     mainAxis: 'center',
     crossAxis: 'center',
@@ -351,6 +692,11 @@ function($rootScope, $scope, component, demos, $http, $templateCache, $q) {
 
 }])
 
+.filter('nospace', function () {
+  return function (value) {
+    return (!value) ? '' : value.replace(/ /g, '');
+  };
+})
 .filter('humanizeDoc', function() {
   return function(doc) {
     if (!doc) return;
@@ -370,5 +716,4 @@ function($rootScope, $scope, component, demos, $http, $templateCache, $q) {
     }
     return str;
   };
-})
-;
+});

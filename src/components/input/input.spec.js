@@ -1,16 +1,47 @@
 describe('md-input-container directive', function() {
+
   beforeEach(module('material.components.input'));
+  beforeEach(module('ngAria'));
 
   function setup(attrs, isForm) {
     var container;
     inject(function($rootScope, $compile) {
-      container = $compile((isForm ? '<form>' : '') + 
-          '<md-input-container><input ' +(attrs||'')+ '><label></label></md-input-container>' +
-          (isForm ? '<form>' : ''))($rootScope);
+      container = $compile((isForm ? '<form>' : '') +
+                           '<md-input-container><input ' +(attrs||'')+ '><label></label></md-input-container>' +
+                           (isForm ? '<form>' : ''))($rootScope);
       $rootScope.$apply();
     });
     return container;
   }
+
+  it('should by default show error on $touched and $invalid', inject(function($rootScope) {
+    var el = setup('ng-model="foo"');
+
+    expect(el).not.toHaveClass('md-input-invalid');
+
+    var model = el.find('input').controller('ngModel');
+    model.$touched = model.$invalid = true;
+    $rootScope.$apply();
+
+    expect(el).toHaveClass('md-input-invalid');
+
+    model.$touched = model.$invalid = false;
+    $rootScope.$apply();
+    expect(el).not.toHaveClass('md-input-invalid');
+  }));
+
+  it('should show error with given md-is-error expression', inject(function($rootScope, $compile) {
+    var el = $compile('<md-input-container md-is-error="$root.isError"><input ng-model="foo"></md-input-container>')($rootScope);
+
+    $rootScope.$apply();
+    expect(el).not.toHaveClass('md-input-invalid');
+
+    $rootScope.$apply('isError = true');
+    expect(el).toHaveClass('md-input-invalid');
+
+    $rootScope.$apply('isError = false');
+    expect(el).not.toHaveClass('md-input-invalid');
+  }));
 
   it('should set focus class on container', function() {
     var el = setup();
@@ -18,6 +49,17 @@ describe('md-input-container directive', function() {
 
     el.find('input').triggerHandler('focus');
     expect(el).toHaveClass('md-input-focused');
+
+    el.find('input').triggerHandler('blur');
+    expect(el).not.toHaveClass('md-input-focused');
+  });
+
+  it('not should set focus class on container if readonly', function() {
+    var el = setup('readonly');
+    expect(el).not.toHaveClass('md-input-focused');
+
+    el.find('input').triggerHandler('focus');
+    expect(el).not.toHaveClass('md-input-focused');
 
     el.find('input').triggerHandler('blur');
     expect(el).not.toHaveClass('md-input-focused');
@@ -46,13 +88,13 @@ describe('md-input-container directive', function() {
     expect(el).not.toHaveClass('md-input-has-value');
   }));
 
-  it('should match label to given input id', inject(function($rootScope) {
+  it('should match label to given input id', inject(function() {
     var el = setup('id="foo"');
     expect(el.find('label').attr('for')).toBe('foo');
     expect(el.find('input').attr('id')).toBe('foo');
   }));
 
-  it('should match label to automatic input id', inject(function($rootScope) {
+  it('should match label to automatic input id', inject(function() {
     var el = setup();
     expect(el.find('input').attr('id')).toBeTruthy();
     expect(el.find('label').attr('for')).toBe(el.find('input').attr('id'));
@@ -65,9 +107,9 @@ describe('md-input-container directive', function() {
 
     it('should work with a constant', inject(function($rootScope, $compile) {
       var el = $compile('<form name="form">' +
-                          '<md-input-container>' +
-                            '<input md-maxlength="5" ng-model="foo" name="foo">' +
-                          '</md-input-container>' +
+                        ' <md-input-container>' +
+                        '   <input md-maxlength="5" ng-model="foo" name="foo">' +
+                        ' </md-input-container>' +
                         '</form>')($rootScope);
       $rootScope.$apply();
       expect($rootScope.form.foo.$error['md-maxlength']).toBeFalsy();
@@ -90,9 +132,9 @@ describe('md-input-container directive', function() {
 
     it('should add and remove maxlength element & error with expression', inject(function($rootScope, $compile) {
       var el = $compile('<form name="form">' +
-                          '<md-input-container>' +
-                            '<input md-maxlength="max" ng-model="foo" name="foo">' +
-                          '</md-input-container>' +
+                        ' <md-input-container>' +
+                        '   <input md-maxlength="max" ng-model="foo" name="foo">' +
+                        ' </md-input-container>' +
                         '</form>')($rootScope);
 
       $rootScope.$apply();
@@ -111,4 +153,51 @@ describe('md-input-container directive', function() {
       expect(getCharCounter(el).length).toBe(0);
     }));
   });
+
+  it('should put placeholder into a label element', inject(function($rootScope, $compile) {
+    var el = $compile('<md-input-container><input ng-model="foo" placeholder="some placeholder"></md-input-container>')($rootScope);
+    var placeholder = el[0].querySelector('.md-placeholder');
+    var label = el.find('label')[0];
+
+    expect(el.find('input')[0].hasAttribute('placeholder')).toBe(false);
+    expect(label).toBeTruthy();
+    expect(label.textContent).toEqual('some placeholder');
+  }));
+
+  it('should ignore placeholder when a label element is present', inject(function($rootScope, $compile) {
+      var el = $compile('<md-input-container><label>Hello</label><input ng-model="foo" placeholder="some placeholder"></md-input-container>')($rootScope);
+      var placeholder = el[0].querySelector('.md-placeholder');
+      var label = el.find('label')[0];
+
+      expect(el.find('input')[0].hasAttribute('placeholder')).toBe(false);
+      expect(label).toBeTruthy();
+      expect(label.textContent).toEqual('Hello');
+    }));
+
+  it('should put an aria-label on the input when no label is present', inject(function($rootScope, $compile) {
+    var el = $compile('<form name="form">' +
+                      ' <md-input-container md-no-float>' +
+                      '   <input placeholder="baz" md-maxlength="max" ng-model="foo" name="foo">' +
+                      ' </md-input-container>' +
+                      '</form>')($rootScope);
+
+    $rootScope.$apply();
+
+    var input = el.find('input');
+    expect(input.attr('aria-label')).toBe('baz');
+  }));
+
+  it('should put the container in "has value" state when input has a static value', inject(function($rootScope, $compile) {
+    var scope = $rootScope.$new();
+    var template =
+        '<md-input-container>' +
+          '<label>Name</label>' +
+          '<input value="Larry">' +
+        '</md-input-container>';
+
+    var element = $compile(template)(scope);
+    scope.$apply();
+
+    expect(element.hasClass('md-input-has-value')).toBe(true);
+  }));
 });

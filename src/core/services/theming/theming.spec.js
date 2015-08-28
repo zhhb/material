@@ -5,8 +5,22 @@ describe('$mdThemingProvider', function() {
   var testTheme;
   var testPalette;
   var startAngular = inject;
+
+  beforeEach(function() {
+
+    module('material.core', function($provide) {
+      /**
+       *  material-mocks.js clears the $MD_THEME_CSS for Karma testing performance
+       *  performance optimizations. Here inject some length into our theme_css so that
+       *  palettes are parsed/generated
+       */
+      $provide.constant('$MD_THEME_CSS', '/**/');
+    });
+
+  });
+
   function setup() {
-    module('material.core.theming', function($mdThemingProvider, $provide) {
+    module('material.core', function($mdThemingProvider) {
       themingProvider = $mdThemingProvider;
 
       testPalette = themingProvider._PALETTES.testPalette = themingProvider._PALETTES.otherTestPalette = {
@@ -28,6 +42,8 @@ describe('$mdThemingProvider', function() {
         'contrastDarkColors': ['50', '100', '200', '300', '400', 'A100'],
         'contrastStrongLightColors': ['900']
       };
+
+
       defaultTheme = themingProvider.theme('default')
         .primaryPalette('testPalette')
         .warnPalette('testPalette')
@@ -35,6 +51,7 @@ describe('$mdThemingProvider', function() {
         .backgroundPalette('testPalette');
 
       testTheme = themingProvider.theme('test');
+
     });
     startAngular();
   }
@@ -153,6 +170,7 @@ describe('$mdThemingProvider', function() {
 
     function parse(str) {
       return themingProvider._parseRules(testTheme, 'primary', str)
+        .join('')
         .split(/\}(?!(\}|'|"|;))/)
         .filter(function(val) { return !!val; })
         .map(function(rule) {
@@ -168,14 +186,22 @@ describe('$mdThemingProvider', function() {
     it('errors if given a theme with invalid palettes', function() {
       testTheme.primaryPalette('invalidPalette');
       expect(function() {
-        themingProvider._parseRules(testTheme, 'primary', '');
+        themingProvider._parseRules(testTheme, 'primary', '').join('');
       }).toThrow();
     });
+
+    it('drops the default theme name from the selectors', function() {
+      expect(themingProvider._parseRules(
+        defaultTheme, 'primary', '.md-THEME_NAME-theme.md-button { }'
+      ).join('')).toContain('.md-button { }');
+    });
+
     it('replaces THEME_NAME', function() {
       expect(themingProvider._parseRules(
         testTheme, 'primary', '.md-THEME_NAME-theme {}'
-      )).toContain('.md-test-theme {}');
+      ).join('')).toContain('.md-test-theme {}');
     });
+
     describe('parses foreground text and shadow', function() {
       it('for a light theme', function() {
         testTheme.dark(false);
@@ -347,6 +373,10 @@ describe('$mdTheming service', function() {
     expect(child.hasClass('md-dark-theme')).toBe(false);
     expect(child.hasClass('md-space-theme')).toBe(true);
   }));
+
+  it('exposes a getter for the default theme', inject(function($mdTheming) {
+    expect($mdTheming.defaultTheme()).toBe('default');
+  }));
 });
 
 describe('md-theme directive', function() {
@@ -361,6 +391,24 @@ describe('md-theme directive', function() {
     $rootScope.$apply('themey = "blue"');
     expect(ctrl.$mdTheme).toBe('blue');
   }));
+
+  it('warns when an unregistered theme is used', function() {
+    inject(function($log, $compile, $rootScope) {
+      spyOn($log, 'warn');
+      var el = $compile('<div md-theme="unregistered"></div>')($rootScope);
+      $rootScope.$apply();
+      expect($log.warn).toHaveBeenCalled();
+    });
+  });
+
+  it('does not warn when a registered theme is used', function() {
+    inject(function($log, $compile, $rootScope) {
+      spyOn($log, 'warn');
+      var el = $compile('<div md-theme="default"></div>')($rootScope);
+      $rootScope.$apply();
+      expect($log.warn.calls.count()).toBe(0);
+    });
+  });
 });
 
 describe('md-themable directive', function() {

@@ -1,61 +1,80 @@
-@keyframes tooltipBackgroundShow {
-  0% {
-    transform: scale(0.2);
-    opacity: 0.25;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.0);
-    opacity: 1;
-  }
-}
-@keyframes tooltipBackgroundHide {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
-}
+$tooltip-fontsize-lg: rem(1);
+$tooltip-fontsize-sm: rem(1.4);
+$tooltip-height-lg: rem(2.2);
+$tooltip-height-sm: rem(3.2);
+$tooltip-top-margin-lg: rem(1.4);
+$tooltip-top-margin-sm: rem(2.4);
+$tooltip-lr-padding-lg: rem(0.8);
+$tooltip-lr-padding-sm: rem(1.6);
+$tooltip-max-width: rem(3.20);
 
 md-tooltip {
   position: absolute;
-  font-size: 14px;
   z-index: $z-index-tooltip;
   overflow: hidden;
   pointer-events: none;
   border-radius: 4px;
 
-  &[md-direction="bottom"] {
-    transform: translate3d(0, -30%, 0);
-    margin-top: 8px;
-  }
-  &[md-direction="top"] {
-    transform: translate3d(0, 30%, 0);
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: $tooltip-fontsize-sm;
+  @media screen and (min-width: $layout-breakpoint-sm) {
+    font-size: $tooltip-fontsize-lg;
   }
 
   .md-background {
     position: absolute;
-    left: 50%;
-    width: 256px;
-    height: 256px;
-    margin-left: -128px;
-    margin-top: -128px;
-    border-radius: 256px;
-
-    opacity: 0.25;
-    transform: scale(0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+    &.md-show-add {
+      transition: $swift-ease-out;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+    }
+    &.md-show, &.md-show-add-active {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    &.md-show-remove {
+      transition: $swift-ease-in;
+      &.md-show-remove-active {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+      }
+    }
   }
-
   .md-content {
-    max-width: 240px;
+    position: relative;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 
-    padding: 8px;
     background: transparent;
-    opacity: 0.3;
-    transition: inherit;
+    opacity: 0;
+
+    height: $tooltip-height-sm;
+    line-height: $tooltip-height-sm;
+    padding-left: $tooltip-lr-padding-sm;
+    padding-right: $tooltip-lr-padding-sm;
+    @media screen and (min-width: $layout-breakpoint-sm) {
+      height: $tooltip-height-lg;
+      line-height: $tooltip-height-lg;
+      padding-left: $tooltip-lr-padding-lg;
+      padding-right: $tooltip-lr-padding-lg;
+    }
+    &.md-show-add {
+      transition: $swift-ease-out;
+      opacity: 0;
+    }
+    &.md-show, &.md-show-add-active {
+      opacity: 1;
+    }
+    &.md-show-remove {
+      transition: $swift-ease-in;
+      &.md-show-remove-active {
+        opacity: 0;
+      }
+    }
   }
 
   &.md-hide {
@@ -66,31 +85,5 @@ md-tooltip {
     transition: $swift-ease-out;
     pointer-events: auto;
     transform: translate3d(0,0,0);
-
-    .md-background {
-      transform: scale(1.0);
-      opacity: 1.0;
-      animation: tooltipBackgroundShow linear;
-    }
-    .md-content {
-      opacity: 0.99;
-    }
-  }
-  &.md-hide .md-background {
-    transform: scale(1.0);
-    opacity: 0;
-    animation: tooltipBackgroundHide 0.2s linear;
-  }
-
-  /**
-   * Depending on the tooltip's size as a multiple of 32 (set by JS),
-   * change the background's animation duration.
-   * The larger the tooltip, the less time the background should take to ripple outwards.
-   */
-  @for $i from 1 through 8 {
-    &[width-32="#{$i}"].md-show .md-background {
-      $duration: 1000 - $i * 100;
-      animation-duration: #{$duration}ms;
-    }
   }
 }
